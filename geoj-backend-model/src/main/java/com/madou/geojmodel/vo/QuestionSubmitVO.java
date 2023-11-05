@@ -66,9 +66,9 @@ public class QuestionSubmitVO implements Serializable {
     private UserVO userVO;
 
     /**
-     * 对应题目信息
+     * 对应题目名称
      */
-    private QuestionVO questionVO;
+    private String questionName;
 
     /**
      * 包装类转对象

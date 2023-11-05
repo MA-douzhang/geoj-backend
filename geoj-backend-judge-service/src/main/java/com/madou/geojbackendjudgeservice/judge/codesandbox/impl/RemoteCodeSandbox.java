@@ -1,5 +1,6 @@
 package com.madou.geojbackendjudgeservice.judge.codesandbox.impl;
 
+import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
 import com.madou.geojbackendjudgeservice.judge.codesandbox.CodeSandbox;
@@ -25,6 +26,7 @@ public class RemoteCodeSandbox implements CodeSandbox {
         System.out.println("远程代码沙箱");
         String url = "http://localhost:8091/executeCode";
         String json = JSONUtil.toJsonStr(executeCodeRequest);
+        //请求沙箱超过10s不返回信息为报错
         String responseStr = HttpUtil.createPost(url)
                 .header(AUTH_REQUEST_HEADER, AUTH_REQUEST_SECRET)
                 .body(json)

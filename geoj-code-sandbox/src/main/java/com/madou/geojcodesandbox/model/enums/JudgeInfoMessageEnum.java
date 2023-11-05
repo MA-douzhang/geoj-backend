@@ -1,4 +1,4 @@
-package com.madou.geojmodel.enums;
+package com.madou.geojcodesandbox.model.enums;
 
 import org.apache.commons.lang3.ObjectUtils;
 

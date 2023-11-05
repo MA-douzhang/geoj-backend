@@ -76,18 +76,25 @@ public class JudgeServiceImpl implements JudgeService {
         ExecuteCodeResponse executeCodeResponse = codeSandbox.executeCode(executeCodeRequest);
         List<String> outputList = executeCodeResponse.getOutputList();
         // 5）根据沙箱的执行结果，设置题目的判题状态和信息
-        JudgeContext judgeContext = new JudgeContext();
-        judgeContext.setJudgeInfo(executeCodeResponse.getJudgeInfo());
-        judgeContext.setInputList(inputList);
-        judgeContext.setOutputList(outputList);
-        judgeContext.setJudgeCaseList(judgeCaseList);
-        judgeContext.setQuestion(question);
-        judgeContext.setQuestionSubmit(questionSubmit);
-        JudgeInfo judgeInfo = judgeManager.doJudge(judgeContext);
+        JudgeInfo judgeInfo = new JudgeInfo();
+        // 代码运行状态 2成功 3失败
+        Integer codeResponseStatus = executeCodeResponse.getStatus();
+        if (codeResponseStatus.equals(QuestionSubmitStatusEnum.SUCCEED.getValue())) {
+            JudgeContext judgeContext = new JudgeContext();
+            judgeContext.setJudgeInfo(executeCodeResponse.getJudgeInfo());
+            judgeContext.setInputList(inputList);
+            judgeContext.setOutputList(outputList);
+            judgeContext.setJudgeCaseList(judgeCaseList);
+            judgeContext.setQuestion(question);
+            judgeContext.setQuestionSubmit(questionSubmit);
+            judgeInfo = judgeManager.doJudge(judgeContext);
+        }else if (codeResponseStatus.equals(QuestionSubmitStatusEnum.FAILED.getValue())){
+            judgeInfo.setMessage(executeCodeResponse.getMessage());
+        }
         // 6）修改数据库中的判题结果
         questionSubmitUpdate = new QuestionSubmit();
         questionSubmitUpdate.setId(questionSubmitId);
-        questionSubmitUpdate.setStatus(QuestionSubmitStatusEnum.SUCCEED.getValue());
+        questionSubmitUpdate.setStatus(codeResponseStatus);
         questionSubmitUpdate.setJudgeInfo(JSONUtil.toJsonStr(judgeInfo));
         update = questionFeignClient.updateQuestionSubmitById(questionSubmitUpdate);
         if (!update) {

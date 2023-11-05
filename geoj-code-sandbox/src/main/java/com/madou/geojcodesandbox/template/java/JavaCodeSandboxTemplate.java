@@ -2,18 +2,19 @@ package com.madou.geojcodesandbox.template.java;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
-import com.madou.geojcodesandbox.model.ExecuteCodeRequest;
-import com.madou.geojcodesandbox.model.ExecuteCodeResponse;
-import com.madou.geojcodesandbox.model.ExecuteMessage;
-import com.madou.geojcodesandbox.model.JudgeInfo;
+import com.madou.geojcodesandbox.model.*;
+import com.madou.geojcodesandbox.model.enums.JudgeInfoMessageEnum;
+import com.madou.geojcodesandbox.model.enums.QuestionSubmitStatusEnum;
 import com.madou.geojcodesandbox.template.CodeSandbox;
 import com.madou.geojcodesandbox.utils.ProcessUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.UUID;
 
 /**
@@ -38,16 +39,46 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
         List<String> inputList = executeCodeRequest.getInputList();
         String code = executeCodeRequest.getCode();
         String language = executeCodeRequest.getLanguage();
-
+        File userCodeFile;
 //        1. 把用户的代码保存为文件
-        File userCodeFile = saveCodeToFile(code);
+        try {
+            userCodeFile  = saveCodeToFile(code);
+        } catch (Exception e) {
+            return ExecuteCodeResponse.builder()
+                    .status(QuestionSubmitStatusEnum.FAILED.getValue())
+                    .message(JudgeInfoMessageEnum.SYSTEM_ERROR.getValue())
+                    .build();
+        }
 
 //        2. 编译代码，得到 class 文件
-        ExecuteMessage compileFileExecuteMessage = compileFile(userCodeFile);
-        System.out.println(compileFileExecuteMessage);
+        try {
+            ExecuteMessage compileFileExecuteMessage = compileFile(userCodeFile);
+            System.out.println(compileFileExecuteMessage);
+        } catch (Exception e) {
+            return ExecuteCodeResponse.builder()
+                    .status(QuestionSubmitStatusEnum.FAILED.getValue())
+                    .message(JudgeInfoMessageEnum.COMPILE_ERROR.getValue())
+                    .build();
+        }
 
         // 3. 执行代码，得到输出结果
-        List<ExecuteMessage> executeMessageList = runFile(userCodeFile, inputList);
+        List<ExecuteMessage> executeMessageList = null;
+        try {
+            executeMessageList = runFile(userCodeFile, inputList);
+            ExecuteMessage executeMessage = executeMessageList.get(executeMessageList.size() - 1);
+            //执行报错
+            if (StringUtils.isNotBlank(executeMessage.getErrorMessage())){
+                return ExecuteCodeResponse.builder()
+                        .status(QuestionSubmitStatusEnum.FAILED.getValue())
+                        .message(JudgeInfoMessageEnum.TIME_LIMIT_EXCEEDED.getValue())
+                        .build();
+            }
+        } catch (Exception e) {
+            return ExecuteCodeResponse.builder()
+                    .status(QuestionSubmitStatusEnum.FAILED.getValue())
+                    .message(JudgeInfoMessageEnum.RUNTIME_ERROR.getValue())
+                    .build();
+        }
 
 //        4. 收集整理输出结果
         ExecuteCodeResponse outputResponse = getOutputResponse(executeMessageList);
@@ -62,6 +93,7 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
 
     /**
      * 1. 把用户的代码保存为文件
+     *
      * @param code 用户代码
      * @return
      */
@@ -82,6 +114,7 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
 
     /**
      * 2、编译代码
+     *
      * @param userCodeFile
      * @return
      */
@@ -95,12 +128,13 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
             }
             return executeMessage;
         } catch (Exception e) {
-//            return getErrorResponse(e);
-            throw new RuntimeException(e);
+            throw new RuntimeException("编译错误");
         }
     }
+
     /**
      * 3、执行文件，获得执行结果列表
+     *
      * @param userCodeFile
      * @param inputList
      * @return
@@ -136,6 +170,7 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
 
     /**
      * 4、获取输出结果
+     *
      * @param executeMessageList
      * @return
      */
@@ -168,10 +203,13 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
         // 要借助第三方库来获取内存占用，非常麻烦，此处不做实现
 //        judgeInfo.setMemory();
         executeCodeResponse.setJudgeInfo(judgeInfo);
+        executeCodeResponse.setStatus(QuestionSubmitStatusEnum.SUCCEED.getValue());
         return executeCodeResponse;
     }
+
     /**
      * 5、删除文件
+     *
      * @param userCodeFile
      * @return
      */

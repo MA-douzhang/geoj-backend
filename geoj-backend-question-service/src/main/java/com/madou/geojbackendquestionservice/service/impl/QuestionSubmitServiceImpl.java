@@ -21,6 +21,8 @@ import com.madou.geojmodel.entity.User;
 import com.madou.geojmodel.enums.QuestionSubmitLanguageEnum;
 import com.madou.geojmodel.enums.QuestionSubmitStatusEnum;
 import com.madou.geojmodel.vo.QuestionSubmitVO;
+import com.madou.geojmodel.vo.QuestionVO;
+import com.madou.geojmodel.vo.UserVO;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -32,13 +34,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
-* @author 李鱼皮
-* @description 针对表【question_submit(题目提交)】的数据库操作Service实现
-* @createDate 2023-08-07 20:58:53
-*/
+ * @author 李鱼皮
+ * @description 针对表【question_submit(题目提交)】的数据库操作Service实现
+ * @createDate 2023-08-07 20:58:53
+ */
 @Service
 public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper, QuestionSubmit>
-    implements QuestionSubmitService {
+        implements QuestionSubmitService {
 
     @Resource
     private QuestionService questionService;
@@ -86,7 +88,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         questionSubmit.setStatus(QuestionSubmitStatusEnum.WAITING.getValue());
         questionSubmit.setJudgeInfo("{}");
         boolean save = this.save(questionSubmit);
-        if (!save){
+        if (!save) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "数据插入失败");
         }
         Long questionSubmitId = questionSubmit.getId();
@@ -133,6 +135,13 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     @Override
     public QuestionSubmitVO getQuestionSubmitVO(QuestionSubmit questionSubmit, User loginUser) {
         QuestionSubmitVO questionSubmitVO = QuestionSubmitVO.objToVo(questionSubmit);
+        //保存提交用户信息
+        User userSubmit = userFeignClient.getById(questionSubmit.getUserId());
+        UserVO userVO = userFeignClient.getUserVO(userSubmit);
+        questionSubmitVO.setUserVO(userVO);
+        //保存题目脱敏信息
+        String title = questionService.getById(questionSubmit.getQuestionId()).getTitle();
+        questionSubmitVO.setQuestionName(title);
         // 脱敏：仅本人和管理员能看见自己（提交 userId 和登录用户 id 不同）提交的代码
         long userId = loginUser.getId();
         // 处理脱敏
