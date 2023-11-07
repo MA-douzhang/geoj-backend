@@ -16,6 +16,7 @@
         <module>geoj-backend-question-service</module>
         <module>geoj-backend-user-service</module>
         <module>geoj-backend-judge-service</module>
+        <module>geoj-code-sandbox</module>
     </modules>
 <!--    <parent>-->
 <!--        <groupId>org.springframework.boot</groupId>-->

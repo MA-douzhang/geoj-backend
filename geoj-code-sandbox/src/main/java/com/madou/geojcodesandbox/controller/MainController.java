@@ -50,6 +50,7 @@ public class MainController {
         if (executeCodeRequest == null) {
             throw new RuntimeException("请求参数为空");
         }
-        return javaNativeAcmSandbox.executeCode(executeCodeRequest);
+        ExecuteCodeResponse executeCodeResponse = javaNativeAcmSandbox.executeCode(executeCodeRequest);
+        return executeCodeResponse;
     }
 }

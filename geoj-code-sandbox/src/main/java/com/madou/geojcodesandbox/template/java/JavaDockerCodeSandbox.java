@@ -10,7 +10,7 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.madou.geojcodesandbox.model.ExecuteCodeRequest;
 import com.madou.geojcodesandbox.model.ExecuteCodeResponse;
-import com.madou.geojcodesandbox.model.ExecuteMessage;
+import com.madou.geojcodesandbox.model.ExecuteResult;
 import org.springframework.util.StopWatch;
 
 import java.io.Closeable;
@@ -48,7 +48,7 @@ public class JavaDockerCodeSandbox extends JavaCodeSandboxTemplate {
      * @return
      */
     @Override
-    public List<ExecuteMessage> runFile(File userCodeFile, List<String> inputList) {
+    public List<ExecuteResult> runFile(File userCodeFile, List<String> inputList) {
         String userCodeParentPath = userCodeFile.getParentFile().getAbsolutePath();
         // 获取默认的 Docker Client
         DockerClient dockerClient = DockerClientBuilder.getInstance().build();
@@ -102,7 +102,7 @@ public class JavaDockerCodeSandbox extends JavaCodeSandboxTemplate {
 
         // docker exec keen_blackwell java -cp /app Main 1 3
         // 执行命令并获取结果
-        List<ExecuteMessage> executeMessageList = new ArrayList<>();
+        List<ExecuteResult> executeMessageList = new ArrayList<>();
         for (String inputArgs : inputList) {
             StopWatch stopWatch = new StopWatch();
             String[] inputArgsArray = inputArgs.split(" ");
@@ -115,7 +115,7 @@ public class JavaDockerCodeSandbox extends JavaCodeSandboxTemplate {
                     .exec();
             System.out.println("创建执行命令：" + execCreateCmdResponse);
 
-            ExecuteMessage executeMessage = new ExecuteMessage();
+            ExecuteResult executeMessage = new ExecuteResult();
             final String[] message = {null};
             final String[] errorMessage = {null};
             long time = 0L;
@@ -189,8 +189,8 @@ public class JavaDockerCodeSandbox extends JavaCodeSandboxTemplate {
                 System.out.println("程序执行异常");
                 throw new RuntimeException(e);
             }
-            executeMessage.setMessage(message[0]);
-            executeMessage.setErrorMessage(errorMessage[0]);
+            executeMessage.setOutput(message[0]);
+            executeMessage.setErrorOutput(errorMessage[0]);
             executeMessage.setTime(time);
             executeMessage.setMemory(maxMemory[0]);
             executeMessageList.add(executeMessage);

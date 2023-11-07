@@ -25,4 +25,7 @@ public interface QuestionFeignClient {
     @PostMapping("/question_submit/update")
     boolean updateQuestionSubmitById(@RequestBody QuestionSubmit questionSubmit);
 
+    @PostMapping("/update/accepted")
+    void updateQuestionAcceptedById(@RequestParam("questionId") long questionId);
+
 }

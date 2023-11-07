@@ -1,6 +1,5 @@
 package com.madou.geojbackendjudgeservice.rabbitmq;
 
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.madou.geojbackendjudgeservice.judge.JudgeService;
 import com.madou.geojbackendserviceclient.service.QuestionFeignClient;
@@ -43,6 +42,7 @@ public class MyMessageConsumer {
             //封装返回信息
             JudgeInfo judgeInfo = new JudgeInfo();
             judgeInfo.setMessage(JudgeInfoMessageEnum.SANDBOX_ERROR.getValue());
+            judgeInfo.setStatus(JudgeInfoMessageEnum.SANDBOX_ERROR.getValue());
             // 3）更改判题（题目提交）的状态为 “结束”，信息为沙盒中返回的信息
             QuestionSubmit questionSubmitUpdate = new QuestionSubmit();
             questionSubmitUpdate.setId(questionSubmitId);

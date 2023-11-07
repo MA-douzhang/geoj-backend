@@ -3,6 +3,8 @@ package com.madou.geojbackendquestionservice.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.madou.geojmodel.dto.questionRun.QuestionRunRequest;
+import com.madou.geojmodel.dto.questionRun.QuestionRunResult;
 import com.madou.geojmodel.dto.questionSubmit.QuestionSubmitAddRequest;
 import com.madou.geojmodel.dto.questionSubmit.QuestionSubmitQueryRequest;
 import com.madou.geojmodel.entity.QuestionSubmit;
@@ -50,4 +52,5 @@ public interface QuestionSubmitService extends IService<QuestionSubmit> {
      * @return
      */
     Page<QuestionSubmitVO> getQuestionSubmitVOPage(Page<QuestionSubmit> questionSubmitPage, User loginUser);
+
 }

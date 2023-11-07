@@ -9,10 +9,12 @@ import com.madou.geojcommon.exception.BusinessException;
 import com.madou.geojmodel.codesandbox.ExecuteCodeRequest;
 import com.madou.geojmodel.codesandbox.ExecuteCodeResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Component;
 
 /**
  * 远程代码沙箱（实际调用接口的沙箱）
  */
+@Component
 public class RemoteCodeSandbox implements CodeSandbox {
 
     // 定义鉴权请求头和密钥

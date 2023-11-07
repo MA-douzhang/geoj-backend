@@ -1,5 +1,7 @@
 package com.madou.geojbackendquestionservice.controller.inner;
 
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.madou.geojbackendquestionservice.mapper.QuestionMapper;
 import com.madou.geojbackendquestionservice.service.QuestionService;
 import com.madou.geojbackendquestionservice.service.QuestionSubmitService;
 import com.madou.geojbackendserviceclient.service.QuestionFeignClient;
@@ -20,6 +22,8 @@ public class QuestionInnerController implements QuestionFeignClient {
     private QuestionService questionService;
 
     @Resource
+    private QuestionMapper questionMapper;
+    @Resource
     private QuestionSubmitService questionSubmitService;
 
     @GetMapping("/get/id")
@@ -38,6 +42,12 @@ public class QuestionInnerController implements QuestionFeignClient {
     @Override
     public boolean updateQuestionSubmitById(@RequestBody QuestionSubmit questionSubmit) {
         return questionSubmitService.updateById(questionSubmit);
+    }
+
+    @Override
+    public void updateQuestionAcceptedById(long questionId) {
+       questionMapper.update(null, new UpdateWrapper<Question>()
+                .setSql("accepted_num = accepted_num + 1").eq("id", questionId));
     }
 
 }

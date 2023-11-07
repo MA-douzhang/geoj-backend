@@ -1,6 +1,7 @@
 package com.madou.geojbackendjudgeservice.judge.strategy;
 
 import cn.hutool.json.JSONUtil;
+import com.madou.geojmodel.codesandbox.ExecuteResult;
 import com.madou.geojmodel.codesandbox.JudgeInfo;
 import com.madou.geojmodel.dto.question.JudgeCase;
 import com.madou.geojmodel.dto.question.JudgeConfig;
@@ -8,61 +9,70 @@ import com.madou.geojmodel.entity.Question;
 import com.madou.geojmodel.enums.JudgeInfoMessageEnum;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 默认判题策略
  */
 public class DefaultJudgeStrategy implements JudgeStrategy {
 
+
     /**
      * 执行判题
+     *
      * @param judgeContext
      * @return
      */
     @Override
     public JudgeInfo doJudge(JudgeContext judgeContext) {
-        JudgeInfo judgeInfo = judgeContext.getJudgeInfo();
-        Long memory = judgeInfo.getMemory();
-        Long time = judgeInfo.getTime();
+        JudgeConfig judgeConfig = judgeContext.getJudgeConfig();
         List<String> inputList = judgeContext.getInputList();
-        List<String> outputList = judgeContext.getOutputList();
-        Question question = judgeContext.getQuestion();
-        List<JudgeCase> judgeCaseList = judgeContext.getJudgeCaseList();
-        JudgeInfoMessageEnum judgeInfoMessageEnum = JudgeInfoMessageEnum.ACCEPTED;
-        JudgeInfo judgeInfoResponse = new JudgeInfo();
-        judgeInfoResponse.setMemory(memory);
-        judgeInfoResponse.setTime(time);
-        // 先判断沙箱执行的结果输出数量是否和预期输出数量相等
-        if (outputList.size() != inputList.size()) {
-            judgeInfoMessageEnum = JudgeInfoMessageEnum.WRONG_ANSWER;
-            judgeInfoResponse.setMessage(judgeInfoMessageEnum.getValue());
-            return judgeInfoResponse;
-        }
-        // 依次判断每一项输出和预期输出是否相等
-        for (int i = 0; i < judgeCaseList.size(); i++) {
-            JudgeCase judgeCase = judgeCaseList.get(i);
-            if (!judgeCase.getOutput().equals(outputList.get(i))) {
-                judgeInfoMessageEnum = JudgeInfoMessageEnum.WRONG_ANSWER;
-                judgeInfoResponse.setMessage(judgeInfoMessageEnum.getValue());
-                return judgeInfoResponse;
+        List<String> expectedOutput = judgeContext.getExpectedOutput();
+        List<ExecuteResult> results = judgeContext.getResults();
+        List<String> outputList = results.stream().map(ExecuteResult::getOutput).collect(Collectors.toList());
+        JudgeInfo judgeInfoResponse = judgeContext.getJudgeInfo();
+        int total = inputList.size();
+        //设置通过的测试用例
+        int pass = 0;
+        //设置最大实行时间
+        long maxTime = Long.MIN_VALUE;
+        for (int i = 0; i < total; i++) {
+            //判断执行时间
+            Long time = results.get(i).getTime();
+            if (time > maxTime) {
+                maxTime = time;
+            }
+            if (expectedOutput.get(i).equals(outputList.get(i))) {
+                //超时
+                if (maxTime > judgeConfig.getTimeLimit()) {
+                    judgeInfoResponse.setTime(maxTime);
+                    judgeInfoResponse.setPass(pass);
+                    judgeInfoResponse.setStatus(JudgeInfoMessageEnum.TIME_LIMIT_EXCEEDED.getValue());
+                    judgeInfoResponse.setMessage(JudgeInfoMessageEnum.TIME_LIMIT_EXCEEDED.getText());
+                    break;
+                } else {
+                    pass++;
+                }
+            } else {
+                //遇到了一个没通过的
+                judgeInfoResponse.setPass(pass);
+                judgeInfoResponse.setTime(maxTime);
+                judgeInfoResponse.setStatus(JudgeInfoMessageEnum.WRONG_ANSWER.getValue());
+                judgeInfoResponse.setMessage(JudgeInfoMessageEnum.WRONG_ANSWER.getText());
+                //设置输出和预期输出信息
+                judgeInfoResponse.setInput(inputList.get(i));
+                judgeInfoResponse.setOutput(outputList.get(i));
+                judgeInfoResponse.setExpectedOutput(expectedOutput.get(i));
+                break;
             }
         }
-        // 判断题目限制
-        String judgeConfigStr = question.getJudgeConfig();
-        JudgeConfig judgeConfig = JSONUtil.toBean(judgeConfigStr, JudgeConfig.class);
-        Long needMemoryLimit = judgeConfig.getMemoryLimit();
-        Long needTimeLimit = judgeConfig.getTimeLimit();
-        if (memory > needMemoryLimit) {
-            judgeInfoMessageEnum = JudgeInfoMessageEnum.MEMORY_LIMIT_EXCEEDED;
-            judgeInfoResponse.setMessage(judgeInfoMessageEnum.getValue());
-            return judgeInfoResponse;
+        if (pass == total) {
+            judgeInfoResponse.setPass(total);
+            judgeInfoResponse.setTime(maxTime);
+            judgeInfoResponse.setStatus(JudgeInfoMessageEnum.ACCEPTED.getValue());
+            judgeInfoResponse.setMessage(JudgeInfoMessageEnum.ACCEPTED.getText());
         }
-        if (time > needTimeLimit) {
-            judgeInfoMessageEnum = JudgeInfoMessageEnum.TIME_LIMIT_EXCEEDED;
-            judgeInfoResponse.setMessage(judgeInfoMessageEnum.getValue());
-            return judgeInfoResponse;
-        }
-        judgeInfoResponse.setMessage(judgeInfoMessageEnum.getValue());
         return judgeInfoResponse;
     }
+
 }

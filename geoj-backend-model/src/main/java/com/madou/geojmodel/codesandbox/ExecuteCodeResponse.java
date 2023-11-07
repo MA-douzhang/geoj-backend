@@ -7,26 +7,25 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * 提交代码返回信息类
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExecuteCodeResponse {
-
-    private List<String> outputList;
-
     /**
-     * 接口信息
+     * 执行信息
      */
     private String message;
-
     /**
      * 执行状态
      */
     private Integer status;
-
     /**
-     * 判题信息
+     * 执行结果
      */
-    private JudgeInfo judgeInfo;
+    private List<ExecuteResult> results;
+
 }

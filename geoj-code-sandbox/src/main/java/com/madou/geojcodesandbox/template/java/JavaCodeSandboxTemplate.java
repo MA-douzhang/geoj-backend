@@ -1,7 +1,6 @@
 package com.madou.geojcodesandbox.template.java;
 
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.StrUtil;
 import com.madou.geojcodesandbox.model.*;
 import com.madou.geojcodesandbox.model.enums.JudgeInfoMessageEnum;
 import com.madou.geojcodesandbox.model.enums.QuestionSubmitStatusEnum;
@@ -14,7 +13,6 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.UUID;
 
 /**
@@ -52,25 +50,32 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
 
 //        2. 编译代码，得到 class 文件
         try {
-            ExecuteMessage compileFileExecuteMessage = compileFile(userCodeFile);
+            ExecuteResult compileFileExecuteMessage = compileFile(userCodeFile);
             System.out.println(compileFileExecuteMessage);
+            //编译已经失败了
+            if(compileFileExecuteMessage.getExitValue() != 0){
+                return ExecuteCodeResponse.builder()
+                        .status(QuestionSubmitStatusEnum.COMPILE_FAILED.getValue())
+                        .message(compileFileExecuteMessage.getErrorOutput())
+                        .build();
+            }
         } catch (Exception e) {
             return ExecuteCodeResponse.builder()
-                    .status(QuestionSubmitStatusEnum.FAILED.getValue())
-                    .message(JudgeInfoMessageEnum.COMPILE_ERROR.getValue())
+                    .status(QuestionSubmitStatusEnum.COMPILE_FAILED.getValue())
+                    .message(e.toString())
                     .build();
         }
 
         // 3. 执行代码，得到输出结果
-        List<ExecuteMessage> executeMessageList = null;
+        List<ExecuteResult> executeMessageList = null;
         try {
             executeMessageList = runFile(userCodeFile, inputList);
-            ExecuteMessage executeMessage = executeMessageList.get(executeMessageList.size() - 1);
+            ExecuteResult executeMessage = executeMessageList.get(executeMessageList.size() - 1);
             //执行报错
-            if (StringUtils.isNotBlank(executeMessage.getErrorMessage())){
+            if (StringUtils.isNotBlank(executeMessage.getErrorOutput())){
                 return ExecuteCodeResponse.builder()
                         .status(QuestionSubmitStatusEnum.FAILED.getValue())
-                        .message(JudgeInfoMessageEnum.TIME_LIMIT_EXCEEDED.getValue())
+                        .message(executeMessage.getErrorOutput())
                         .build();
             }
         } catch (Exception e) {
@@ -118,11 +123,11 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
      * @param userCodeFile
      * @return
      */
-    public ExecuteMessage compileFile(File userCodeFile) {
+    public ExecuteResult compileFile(File userCodeFile) {
         String compileCmd = String.format("javac -encoding utf-8 %s", userCodeFile.getAbsolutePath());
         try {
             Process compileProcess = Runtime.getRuntime().exec(compileCmd);
-            ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(compileProcess, "编译");
+            ExecuteResult executeMessage = ProcessUtils.runProcessAndGetMessage(compileProcess, "编译");
             if (executeMessage.getExitValue() != 0) {
                 throw new RuntimeException("编译错误");
             }
@@ -139,10 +144,10 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
      * @param inputList
      * @return
      */
-    public List<ExecuteMessage> runFile(File userCodeFile, List<String> inputList) {
+    public List<ExecuteResult> runFile(File userCodeFile, List<String> inputList) {
         String userCodeParentPath = userCodeFile.getParentFile().getAbsolutePath();
 
-        List<ExecuteMessage> executeMessageList = new ArrayList<>();
+        List<ExecuteResult> executeMessageList = new ArrayList<>();
         for (String inputArgs : inputList) {
 //            String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s Main %s", userCodeParentPath, inputArgs);
             String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s Main %s", userCodeParentPath, inputArgs);
@@ -158,7 +163,7 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
                         throw new RuntimeException(e);
                     }
                 }).start();
-                ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(runProcess, "运行");
+                ExecuteResult executeMessage = ProcessUtils.runProcessAndGetMessage(runProcess, "运行");
                 System.out.println(executeMessage);
                 executeMessageList.add(executeMessage);
             } catch (Exception e) {
@@ -174,37 +179,11 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
      * @param executeMessageList
      * @return
      */
-    public ExecuteCodeResponse getOutputResponse(List<ExecuteMessage> executeMessageList) {
-        ExecuteCodeResponse executeCodeResponse = new ExecuteCodeResponse();
-        List<String> outputList = new ArrayList<>();
-        // 取用时最大值，便于判断是否超时
-        long maxTime = 0;
-        for (ExecuteMessage executeMessage : executeMessageList) {
-            String errorMessage = executeMessage.getErrorMessage();
-            if (StrUtil.isNotBlank(errorMessage)) {
-                executeCodeResponse.setMessage(errorMessage);
-                // 用户提交的代码执行中存在错误
-                executeCodeResponse.setStatus(3);
-                break;
-            }
-            outputList.add(executeMessage.getMessage());
-            Long time = executeMessage.getTime();
-            if (time != null) {
-                maxTime = Math.max(maxTime, time);
-            }
-        }
-        // 正常运行完成
-        if (outputList.size() == executeMessageList.size()) {
-            executeCodeResponse.setStatus(1);
-        }
-        executeCodeResponse.setOutputList(outputList);
-        JudgeInfo judgeInfo = new JudgeInfo();
-        judgeInfo.setTime(maxTime);
-        // 要借助第三方库来获取内存占用，非常麻烦，此处不做实现
-//        judgeInfo.setMemory();
-        executeCodeResponse.setJudgeInfo(judgeInfo);
-        executeCodeResponse.setStatus(QuestionSubmitStatusEnum.SUCCEED.getValue());
-        return executeCodeResponse;
+    public ExecuteCodeResponse getOutputResponse(List<ExecuteResult> executeMessageList) {
+        return ExecuteCodeResponse.builder()
+                .status(QuestionSubmitStatusEnum.SUCCEED.getValue())
+                .message(JudgeInfoMessageEnum.ACCEPTED.getValue())
+                .results(executeMessageList).build();
     }
 
     /**
@@ -221,22 +200,6 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
             return del;
         }
         return true;
-    }
-
-    /**
-     * 6、获取错误响应
-     *
-     * @param e
-     * @return
-     */
-    private ExecuteCodeResponse getErrorResponse(Throwable e) {
-        ExecuteCodeResponse executeCodeResponse = new ExecuteCodeResponse();
-        executeCodeResponse.setOutputList(new ArrayList<>());
-        executeCodeResponse.setMessage(e.getMessage());
-        // 表示代码沙箱错误
-        executeCodeResponse.setStatus(2);
-        executeCodeResponse.setJudgeInfo(new JudgeInfo());
-        return executeCodeResponse;
     }
 
 

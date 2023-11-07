@@ -1,13 +1,14 @@
 package com.madou.geojbackendquestionservice.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.madou.geojbackendquestionservice.mapper.QuestionMapper;
 import com.madou.geojbackendquestionservice.mapper.QuestionSubmitMapper;
 import com.madou.geojbackendquestionservice.rabbitmq.MyMessageProducer;
 import com.madou.geojbackendquestionservice.service.QuestionService;
 import com.madou.geojbackendquestionservice.service.QuestionSubmitService;
-import com.madou.geojbackendserviceclient.service.JudgeFeignClient;
 import com.madou.geojbackendserviceclient.service.UserFeignClient;
 import com.madou.geojcommon.common.ErrorCode;
 import com.madou.geojcommon.constant.CommonConstant;
@@ -21,12 +22,11 @@ import com.madou.geojmodel.entity.User;
 import com.madou.geojmodel.enums.QuestionSubmitLanguageEnum;
 import com.madou.geojmodel.enums.QuestionSubmitStatusEnum;
 import com.madou.geojmodel.vo.QuestionSubmitVO;
-import com.madou.geojmodel.vo.QuestionVO;
 import com.madou.geojmodel.vo.UserVO;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -42,16 +42,15 @@ import java.util.stream.Collectors;
 public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper, QuestionSubmit>
         implements QuestionSubmitService {
 
+    @Value("${codesandbox.type:remote}")
+    private String type;
     @Resource
     private QuestionService questionService;
 
     @Resource
     private UserFeignClient userFeignClient;
-
     @Resource
-    @Lazy
-    private JudgeFeignClient judgeFeignClient;
-
+    private QuestionMapper questionMapper;
     @Resource
     private MyMessageProducer myMessageProducer;
 
@@ -76,8 +75,20 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         if (question == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
-        // 是否已提交题目
+
         long userId = loginUser.getId();
+        // 是否用户有正在提交的题目或者判断的题目，防止多次提交
+        QuestionSubmit submit = lambdaQuery().eq(QuestionSubmit::getUserId, userId)
+                .and(wrapper -> wrapper.eq(QuestionSubmit::getStatus, QuestionSubmitStatusEnum.WAITING).or()
+                        .eq(QuestionSubmit::getStatus, QuestionSubmitStatusEnum.RUNNING)).one();
+        if (submit != null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "提交过于频繁！");
+        }
+
+        // 将QuestionSubmit的提交数+1
+        questionMapper.update(null, new UpdateWrapper<Question>()
+                .setSql("submitNum = submitNum + 1").eq("id", question.getId()));
+
         // 每个用户串行提交题目
         QuestionSubmit questionSubmit = new QuestionSubmit();
         questionSubmit.setUserId(userId);
@@ -164,6 +175,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         questionSubmitVOPage.setRecords(questionSubmitVOList);
         return questionSubmitVOPage;
     }
+
 
 
 }

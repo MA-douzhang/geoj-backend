@@ -1,7 +1,6 @@
 package com.madou.geojcodesandbox.utils;
 
-import cn.hutool.core.util.StrUtil;
-import com.madou.geojcodesandbox.model.ExecuteMessage;
+import com.madou.geojcodesandbox.model.ExecuteResult;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.StopWatch;
 
@@ -29,8 +28,8 @@ public class ProcessUtils {
      * @param opName
      * @return
      */
-    public static ExecuteMessage runProcessAndGetMessage(Process runProcess, String opName) {
-        ExecuteMessage executeMessage = new ExecuteMessage();
+    public static ExecuteResult runProcessAndGetMessage(Process runProcess, String opName) {
+        ExecuteResult executeMessage = new ExecuteResult();
 
         try {
             StopWatch stopWatch = new StopWatch();
@@ -49,7 +48,7 @@ public class ProcessUtils {
                 while ((compileOutputLine = bufferedReader.readLine()) != null) {
                     outputStrList.add(compileOutputLine);
                 }
-                executeMessage.setMessage(StringUtils.join(outputStrList, "\n"));
+                executeMessage.setOutput(StringUtils.join(outputStrList, "\n"));
             } else {
                 // 异常退出
                 System.out.println(opName + "失败，错误码： " + exitValue);
@@ -61,7 +60,7 @@ public class ProcessUtils {
                 while ((compileOutputLine = bufferedReader.readLine()) != null) {
                     outputStrList.add(compileOutputLine);
                 }
-                executeMessage.setMessage(StringUtils.join(outputStrList, "\n"));
+                executeMessage.setOutput(StringUtils.join(outputStrList, "\n"));
 
                 // 分批获取进程的错误输出
                 BufferedReader errorBufferedReader = new BufferedReader(new InputStreamReader(runProcess.getErrorStream()));
@@ -72,7 +71,7 @@ public class ProcessUtils {
                 while ((errorCompileOutputLine = errorBufferedReader.readLine()) != null) {
                     errorOutputStrList.add(errorCompileOutputLine);
                 }
-                executeMessage.setErrorMessage(StringUtils.join(errorOutputStrList, "\n"));
+                executeMessage.setErrorOutput(StringUtils.join(errorOutputStrList, "\n"));
             }
             stopWatch.stop();
             executeMessage.setTime(stopWatch.getLastTaskTimeMillis());
@@ -89,8 +88,8 @@ public class ProcessUtils {
      * @param input
      * @return
      */
-    public static ExecuteMessage runProcessAcmAndGetMessage(Process runProcess, String input) throws IOException {
-        ExecuteMessage executeResult = new ExecuteMessage();
+    public static ExecuteResult runProcessAcmAndGetMessage(Process runProcess, String input) throws IOException {
+        ExecuteResult executeResult = new ExecuteResult();
 
         StringReader inputReader = new StringReader(input);
         BufferedReader inputBufferedReader = new BufferedReader(inputReader);
@@ -128,8 +127,8 @@ public class ProcessUtils {
 
         stopWatch.stop();
         executeResult.setTime(stopWatch.getLastTaskTimeMillis());
-        executeResult.setMessage(StringUtils.join(outputList, "\n"));
-        executeResult.setErrorMessage(StringUtils.join(errorList, "\n"));
+        executeResult.setOutput(StringUtils.join(outputList, "\n"));
+        executeResult.setErrorOutput(StringUtils.join(errorList, "\n"));
         runProcess.destroy();
 
         return executeResult;

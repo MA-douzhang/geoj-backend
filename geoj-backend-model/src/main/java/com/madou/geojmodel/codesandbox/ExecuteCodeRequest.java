@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * 代码提交请求类
+ */
 @Data
 @Builder
 @NoArgsConstructor
