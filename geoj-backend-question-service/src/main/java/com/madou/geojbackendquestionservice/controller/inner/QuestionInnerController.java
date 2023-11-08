@@ -47,7 +47,7 @@ public class QuestionInnerController implements QuestionFeignClient {
     @Override
     public void updateQuestionAcceptedById(long questionId) {
        questionMapper.update(null, new UpdateWrapper<Question>()
-                .setSql("accepted_num = accepted_num + 1").eq("id", questionId));
+                .setSql("acceptedNum = acceptedNum + 1").eq("id", questionId));
     }
 
 }

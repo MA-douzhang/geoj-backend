@@ -102,6 +102,20 @@ public class QuestionSubmitController {
         return ResultUtils.success(questionSubmitService.getQuestionSubmitVOPage(questionSubmitPage, loginUser));
     }
 
-
+    /**
+     * 获取某次历史提交的详细信息
+     * @param id
+     * @return
+     */
+    @GetMapping("/get/submit")
+    public BaseResponse<QuestionSubmitVO> getProblemSubmitVoById(Long id,HttpServletRequest request) {
+        User loginUser = userFeignClient.getLoginUser(request);
+        if(loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        QuestionSubmit questionSubmit = questionSubmitService.getById(id);
+        // 返回脱敏信息
+        return ResultUtils.success(QuestionSubmitVO.objToVo(questionSubmit));
+    }
 
 }
