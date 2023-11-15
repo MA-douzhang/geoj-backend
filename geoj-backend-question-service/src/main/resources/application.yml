@@ -62,3 +62,7 @@ codesandbox:
   type: remote
 knife4j:
   enable: true
+yuapi:
+  client:
+    access-key: ux7bpq5mqr8db3n0dfhd46bunkebr8f3
+    secret-key: eg6zsakkz0av0f6jae3g3cw163nw56hc

@@ -1,7 +1,10 @@
 package com.madou.geojbackendquestionservice.controller;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
+import com.madou.geojai.AiManager;
+import com.madou.geojai.model.AnswerAi;
 import com.madou.geojbackendquestionservice.service.QuestionService;
 import com.madou.geojbackendquestionservice.service.QuestionSubmitService;
 import com.madou.geojbackendserviceclient.service.JudgeFeignClient;
@@ -11,6 +14,7 @@ import com.madou.geojcommon.common.BaseResponse;
 import com.madou.geojcommon.common.DeleteRequest;
 import com.madou.geojcommon.common.ErrorCode;
 import com.madou.geojcommon.common.ResultUtils;
+import com.madou.geojcommon.constant.AiConstant;
 import com.madou.geojcommon.constant.UserConstant;
 import com.madou.geojcommon.exception.BusinessException;
 import com.madou.geojcommon.exception.ThrowUtils;
@@ -25,17 +29,17 @@ import com.madou.geojmodel.entity.User;
 import com.madou.geojmodel.vo.QuestionSubmitVO;
 import com.madou.geojmodel.vo.QuestionVO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.List;
 
 /**
  * 题目接口
- *
-
  */
 @RestController
 @RequestMapping("/submit")
@@ -51,6 +55,10 @@ public class QuestionSubmitController {
     @Resource
     private QuestionSubmitService questionSubmitService;
 
+    @Resource
+    private QuestionService questionService;
+    @Resource
+    private AiManager aiManager;
 
     /**
      * 提交题目
@@ -82,6 +90,7 @@ public class QuestionSubmitController {
         QuestionRunResult questionRunResult = judgeFeignClient.doQuestionRun(questionRunRequest);
         return ResultUtils.success(questionRunResult);
     }
+
     /**
      * 分页获取题目提交列表（除了管理员外，普通用户只能看到非答案、提交代码等公开信息）
      *
@@ -104,13 +113,14 @@ public class QuestionSubmitController {
 
     /**
      * 获取某次历史提交的详细信息
+     *
      * @param id
      * @return
      */
     @GetMapping("/get/submit")
-    public BaseResponse<QuestionSubmitVO> getProblemSubmitVoById(Long id,HttpServletRequest request) {
+    public BaseResponse<QuestionSubmitVO> getProblemSubmitVoById(Long id, HttpServletRequest request) {
         User loginUser = userFeignClient.getLoginUser(request);
-        if(loginUser == null) {
+        if (loginUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
         QuestionSubmit questionSubmit = questionSubmitService.getById(id);
@@ -118,4 +128,46 @@ public class QuestionSubmitController {
         return ResultUtils.success(QuestionSubmitVO.objToVo(questionSubmit));
     }
 
+    @PostMapping("/get/ai")
+    public BaseResponse<AnswerAi> getAnswerAi(Long id, HttpServletRequest request) {
+        User loginUser = userFeignClient.getLoginUser(request);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        QuestionSubmit questionSubmit = questionSubmitService.getById(id);
+        if (questionSubmit == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "提交信息为空");
+        }
+        String questionContent = questionService.getById(questionSubmit.getQuestionId()).getContent();
+
+        //构造用户输入
+        StringBuilder requestAi = new StringBuilder();
+        requestAi.append("分析算法题目内容：").append("\n");
+        // 拼接分析目标
+        requestAi.append(questionContent).append("\n");
+        requestAi.append("我的解题代码：").append("\n");
+        requestAi.append(questionSubmit.getCode()).append("\n");
+        String response = aiManager.doChat(requestAi.toString(), AiConstant.MODEL_ID);
+        return ResultUtils.success(strToAnswerAi(response));
+    }
+
+    public AnswerAi strToAnswerAi(String result) {
+        String[] splits = result.split("【【【【【【");
+
+        if (splits.length < 4){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"AI 生成错误");
+        }
+        //todo 可以使用正则表达式保证数据准确性，防止中文出现
+        String solutionIdea= splits[1].trim();
+        String reason = splits[2].trim();
+        String codeAi = splits[3].trim();
+
+        AnswerAi answerAi = new AnswerAi();
+        answerAi.setSolutionIdea(solutionIdea);
+        answerAi.setReason(reason);
+        answerAi.setCodeAi(codeAi);
+
+        return answerAi;
+
+    }
 }

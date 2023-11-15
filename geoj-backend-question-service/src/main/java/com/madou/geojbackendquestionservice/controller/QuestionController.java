@@ -2,6 +2,8 @@ package com.madou.geojbackendquestionservice.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
+import com.madou.geojai.AiManager;
+import com.madou.geojai.model.AnswerAi;
 import com.madou.geojbackendquestionservice.service.QuestionService;
 import com.madou.geojbackendquestionservice.service.QuestionSubmitService;
 import com.madou.geojbackendserviceclient.service.UserFeignClient;
@@ -43,6 +45,7 @@ public class QuestionController {
 
     @Resource
     private QuestionSubmitService questionSubmitService;
+
 
     private final static Gson GSON = new Gson();
 
@@ -290,4 +293,7 @@ public class QuestionController {
         boolean result = questionService.updateById(question);
         return ResultUtils.success(result);
     }
+
+
+
 }

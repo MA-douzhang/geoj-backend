@@ -33,6 +33,8 @@ public class InitRabbitMqBean {
             String queueName = "code_queue";
             channel.queueDeclare(queueName, true, false, false, null);
             channel.queueBind(queueName, EXCHANGE_NAME, "my_routingKey");
+
+
             log.info("消息队列启动成功");
         } catch (Exception e) {
             log.error("消息队列启动失败", e);
