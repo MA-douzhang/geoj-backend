@@ -10,6 +10,7 @@ import com.madou.geojcommon.common.ResultUtils;
 import com.madou.geojcommon.constant.AiConstant;
 import com.madou.geojcommon.exception.BusinessException;
 import com.madou.geojmodel.entity.QuestionSubmit;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -22,6 +23,7 @@ import javax.annotation.Resource;
  * @date 2023/11/15 23:00:55
  */
 @Service
+@Slf4j
 public class QuestionAiServiceImpl implements QuestionAiService {
 
     @Resource
@@ -53,7 +55,7 @@ public class QuestionAiServiceImpl implements QuestionAiService {
     }
     public AnswerAi strToAnswerAi(String result) {
         String[] splits = result.split("【【【【【【");
-
+        log.info("ai生成"+result);
         if (splits.length < 4){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"AI 生成错误");
         }

@@ -1,4 +1,4 @@
-package com.madou.geojcodesandbox.template.java;
+package com.madou.geojcodesandbox.template.code;
 
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.util.ArrayUtil;
@@ -8,6 +8,7 @@ import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
+import com.madou.geojcodesandbox.model.CodeSandboxCmd;
 import com.madou.geojcodesandbox.model.ExecuteCodeRequest;
 import com.madou.geojcodesandbox.model.ExecuteCodeResponse;
 import com.madou.geojcodesandbox.model.ExecuteResult;
@@ -22,11 +23,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class JavaDockerCodeSandbox extends JavaCodeSandboxTemplate {
+public class JavaDockerCodeSandbox extends CodeSandboxTemplate {
 
+    private static final String PREFIX = File.separator + "java";
+
+    private static final String GLOBAL_CODE_DIR_PATH = File.separator + "tempCode";
+
+    private static final String GLOBAL_JAVA_CLASS_NAME = File.separator + "Main.java";
     private static final long TIME_OUT = 5000L;
 
     private static final Boolean FIRST_INIT = true;
+
+    public JavaDockerCodeSandbox() {
+        super.prefix = PREFIX;
+        super.globalCodeDirPath = GLOBAL_CODE_DIR_PATH;
+        super.globalCodeFileName = GLOBAL_JAVA_CLASS_NAME;
+    }
 
     public static void main(String[] args) {
         JavaDockerCodeSandbox javaNativeCodeSandbox = new JavaDockerCodeSandbox();
@@ -41,15 +53,22 @@ public class JavaDockerCodeSandbox extends JavaCodeSandboxTemplate {
         System.out.println(executeCodeResponse);
     }
 
+    @Override
+    public CodeSandboxCmd getCmd(String userCodeParentPath, String userCodePath) {
+        return CodeSandboxCmd
+                .builder()
+                .compileCmd(String.format("javac -encoding utf-8 %s", userCodePath))
+                .runCmd(String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s Main", userCodeParentPath))
+                .build();
+    }
+
     /**
      * 3、创建容器，把文件复制到容器内
-     * @param userCodeFile
      * @param inputList
      * @return
      */
     @Override
-    public List<ExecuteResult> runFile(File userCodeFile, List<String> inputList) {
-        String userCodeParentPath = userCodeFile.getParentFile().getAbsolutePath();
+    public List<ExecuteResult> runFile(String userCodeParentPath , List<String> inputList) {
         // 获取默认的 Docker Client
         DockerClient dockerClient = DockerClientBuilder.getInstance().build();
 

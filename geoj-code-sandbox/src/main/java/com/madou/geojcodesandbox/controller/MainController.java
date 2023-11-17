@@ -1,7 +1,8 @@
 package com.madou.geojcodesandbox.controller;
 
-import com.madou.geojcodesandbox.template.java.JavaNativeAcmSandbox;
-import com.madou.geojcodesandbox.template.java.JavaNativeCodeSandbox;
+import com.madou.geojcodesandbox.template.code.CodeSandboxFactory;
+import com.madou.geojcodesandbox.template.code.CodeSandboxTemplate;
+import com.madou.geojcodesandbox.template.code.JavaNativeAcmSandbox;
 import com.madou.geojcodesandbox.model.ExecuteCodeRequest;
 import com.madou.geojcodesandbox.model.ExecuteCodeResponse;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,10 +23,7 @@ public class MainController {
     private static final String AUTH_REQUEST_SECRET = "secretKey";
 
     @Resource
-    private JavaNativeCodeSandbox javaNativeCodeSandbox;
-
-    @Resource
-    private JavaNativeAcmSandbox javaNativeAcmSandbox;
+    private CodeSandboxFactory codeSandboxFactory;
 
     @GetMapping("/health")
     public String healthCheck() {
@@ -50,7 +48,7 @@ public class MainController {
         if (executeCodeRequest == null) {
             throw new RuntimeException("请求参数为空");
         }
-        ExecuteCodeResponse executeCodeResponse = javaNativeAcmSandbox.executeCode(executeCodeRequest);
-        return executeCodeResponse;
+        CodeSandboxTemplate sandboxTemplate = codeSandboxFactory.newInstance(executeCodeRequest.getLanguage());
+        return sandboxTemplate.executeCode(executeCodeRequest);
     }
 }
