@@ -9,6 +9,7 @@ import com.madou.geojcommon.common.ErrorCode;
 import com.madou.geojcommon.common.ResultUtils;
 import com.madou.geojcommon.constant.AiConstant;
 import com.madou.geojcommon.exception.BusinessException;
+import com.madou.geojcommon.utils.AiUtils;
 import com.madou.geojmodel.entity.QuestionSubmit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -54,14 +55,11 @@ public class QuestionAiServiceImpl implements QuestionAiService {
         return strToAnswerAi(response);
     }
     public AnswerAi strToAnswerAi(String result) {
-        String[] splits = result.split("【【【【【【");
         log.info("ai生成"+result);
-        if (splits.length < 4){
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"AI 生成错误");
-        }
-        String solutionIdea= splits[1].trim();
-        String reason = splits[2].trim();
-        String codeAi = splits[3].trim();
+        String[] splits = AiUtils.strToAnswerAi(result);
+        String solutionIdea= splits[0].trim();
+        String reason = splits[1].trim();
+        String codeAi = splits[2].trim();
 
         AnswerAi answerAi = new AnswerAi();
         answerAi.setSolutionIdea(solutionIdea);
