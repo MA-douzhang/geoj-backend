@@ -72,6 +72,11 @@ public class QuestionVO implements Serializable {
     private Long userId;
 
     /**
+     * 题目难度 1-简单 2-中等 3-困难
+     */
+    private Integer difficulty;
+
+    /**
      * 创建时间
      */
     private Date createTime;

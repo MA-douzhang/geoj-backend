@@ -43,6 +43,11 @@ public class QuestionQueryRequest extends PageRequest implements Serializable {
     private String answer;
 
     /**
+     * 题目难度 1-简单 2-中等 3-困难
+     */
+    private Integer difficulty;
+
+    /**
      * 创建用户 id
      */
     private Long userId;
