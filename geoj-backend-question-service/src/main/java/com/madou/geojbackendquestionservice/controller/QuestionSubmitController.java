@@ -1,6 +1,7 @@
 package com.madou.geojbackendquestionservice.controller;
 
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
 import com.madou.geojai.AiManager;
@@ -26,6 +27,7 @@ import com.madou.geojmodel.dto.questionSubmit.QuestionSubmitQueryRequest;
 import com.madou.geojmodel.entity.Question;
 import com.madou.geojmodel.entity.QuestionSubmit;
 import com.madou.geojmodel.entity.User;
+import com.madou.geojmodel.vo.QuestionDifficultyVO;
 import com.madou.geojmodel.vo.QuestionSubmitVO;
 import com.madou.geojmodel.vo.QuestionVO;
 import lombok.extern.slf4j.Slf4j;
@@ -151,14 +153,32 @@ public class QuestionSubmitController {
         return ResultUtils.success(strToAnswerAi(response));
     }
 
+    /**
+     * 查询用户通过对应难度数量
+     *
+     * @return
+     */
+    @GetMapping("/get/difficulty")
+    public BaseResponse<Integer> getQuestionDifficultyByUserId(Integer difficulty, HttpServletRequest request) {
+        if (difficulty == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userFeignClient.getLoginUser(request);
+        Integer questionCount = questionSubmitService.getQuestionDifficultyCountByUserId(difficulty, loginUser.getId());
+        if (questionCount == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        return ResultUtils.success(questionCount);
+    }
+
     public AnswerAi strToAnswerAi(String result) {
         String[] splits = result.split("【【【【【【");
 
-        if (splits.length < 4){
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"AI 生成错误");
+        if (splits.length < 4) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "AI 生成错误");
         }
         //todo 可以使用正则表达式保证数据准确性，防止中文出现
-        String solutionIdea= splits[1].trim();
+        String solutionIdea = splits[1].trim();
         String reason = splits[2].trim();
         String codeAi = splits[3].trim();
 

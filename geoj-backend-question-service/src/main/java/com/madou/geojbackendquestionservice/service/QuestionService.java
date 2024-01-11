@@ -51,4 +51,11 @@ public interface QuestionService extends IService<Question> {
      */
     Page<QuestionVO> getQuestionVOPage(Page<Question> questionPage, HttpServletRequest request);
 
+    /**
+     * 获取题目难度数量
+     *
+     * @return
+     */
+    Long getQuestionDifficultyNum(Integer difficulty);
+
 }

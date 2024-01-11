@@ -29,13 +29,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
-* @author madou
-* @description 针对表【question(题目)】的数据库操作Service实现
-* @createDate 2023-08-07 20:58:00
-*/
+ * @author madou
+ * @description 针对表【question(题目)】的数据库操作Service实现
+ * @createDate 2023-08-07 20:58:00
+ */
 @Service
 public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
-    implements QuestionService {
+        implements QuestionService {
 
 
     @Resource
@@ -43,6 +43,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
 
     /**
      * 校验题目是否合法
+     *
      * @param question
      * @param add
      */
@@ -99,7 +100,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         Long userId = questionQueryRequest.getUserId();
         String sortField = questionQueryRequest.getSortField();
         String sortOrder = questionQueryRequest.getSortOrder();
-
+        Integer difficulty = questionQueryRequest.getDifficulty();
         // 拼接查询条件
         queryWrapper.like(StringUtils.isNotBlank(title), "title", title);
         queryWrapper.like(StringUtils.isNotBlank(content), "content", content);
@@ -111,6 +112,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         }
         queryWrapper.eq(ObjectUtils.isNotEmpty(id), "id", id);
         queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
+        queryWrapper.eq(difficulty != 0, "difficulty", difficulty);
         queryWrapper.eq("isDelete", false);
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
@@ -155,6 +157,15 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         }).collect(Collectors.toList());
         questionVOPage.setRecords(questionVOList);
         return questionVOPage;
+    }
+
+    @Override
+    public Long getQuestionDifficultyNum(Integer difficulty) {
+
+        QueryWrapper<Question> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("difficulty", difficulty);
+        Long count = count(queryWrapper);
+        return count;
     }
 
 

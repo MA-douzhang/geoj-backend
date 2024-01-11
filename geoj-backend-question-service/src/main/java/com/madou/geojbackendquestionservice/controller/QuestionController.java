@@ -18,6 +18,7 @@ import com.madou.geojcommon.exception.ThrowUtils;
 import com.madou.geojmodel.dto.question.*;
 import com.madou.geojmodel.entity.Question;
 import com.madou.geojmodel.entity.User;
+import com.madou.geojmodel.vo.QuestionDifficultyVO;
 import com.madou.geojmodel.vo.QuestionVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -191,6 +192,25 @@ public class QuestionController {
     }
 
     /**
+     * 根据题目id和用户获取当前题目状态
+     *
+     * @param questionId
+     * @return 1未尝试，2尝试过，3通过
+     */
+    @GetMapping("/get/statue")
+    public BaseResponse<Integer> getQuestionStatueById(long questionId, HttpServletRequest request) {
+        if (questionId <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userFeignClient.getLoginUser(request);
+        Integer statue = questionSubmitService.getQuestionStatueById(questionId,loginUser.getId());
+        if (statue == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        return ResultUtils.success(statue);
+    }
+
+    /**
      * 分页获取列表（封装类）
      *
      * @param questionQueryRequest
@@ -294,6 +314,18 @@ public class QuestionController {
         return ResultUtils.success(result);
     }
 
+    /**
+     * 查询题目难度数量
+     * @return
+     */
+    @GetMapping("/get/difficulty")
+    public BaseResponse<Long> getQuestionCountByDifficulty(Integer difficulty) {
 
+       Long count = questionService.getQuestionDifficultyNum(difficulty);
+        if (count == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        return ResultUtils.success(count);
+    }
 
 }

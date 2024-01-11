@@ -1,5 +1,7 @@
 package com.madou.geojbackendquestionservice.service.impl;
 
+import cn.hutool.json.JSON;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -14,11 +16,13 @@ import com.madou.geojcommon.common.ErrorCode;
 import com.madou.geojcommon.constant.CommonConstant;
 import com.madou.geojcommon.exception.BusinessException;
 import com.madou.geojcommon.utils.SqlUtils;
+import com.madou.geojmodel.codesandbox.JudgeInfo;
 import com.madou.geojmodel.dto.questionSubmit.QuestionSubmitAddRequest;
 import com.madou.geojmodel.dto.questionSubmit.QuestionSubmitQueryRequest;
 import com.madou.geojmodel.entity.Question;
 import com.madou.geojmodel.entity.QuestionSubmit;
 import com.madou.geojmodel.entity.User;
+import com.madou.geojmodel.enums.JudgeInfoMessageEnum;
 import com.madou.geojmodel.enums.QuestionSubmitLanguageEnum;
 import com.madou.geojmodel.enums.QuestionSubmitStatusEnum;
 import com.madou.geojmodel.vo.QuestionSubmitVO;
@@ -176,6 +180,33 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         return questionSubmitVOPage;
     }
 
+    @Override
+    public Integer getQuestionStatueById(long questionId, Long userId) {
+        QueryWrapper<QuestionSubmit> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("questionId", questionId);
+        queryWrapper.eq("userId", userId);
+        List<QuestionSubmit> list = list(queryWrapper);
+        if (list.size() == 0) return 1;
+        for (QuestionSubmit questionSubmit : list) {
+            JudgeInfo judgeInfo = JSONUtil.toBean(questionSubmit.getJudgeInfo(), JudgeInfo.class);
+            if (judgeInfo.getStatus().equals(JudgeInfoMessageEnum.ACCEPTED.getValue())) return 3;
+        }
+        return 2;
+    }
+
+    @Override
+    public Integer getQuestionDifficultyCountByUserId(Integer difficulty, Long userId) {
+        QueryWrapper<Question> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("difficulty", difficulty);
+        List<Question> questionList = questionMapper.selectList(queryWrapper);
+        int count = 0;
+        for (Question question : questionList) {
+            if (getQuestionStatueById(question.getId(), userId) == 3) {
+                count++;
+            }
+        }
+        return count;
+    }
 
 
 }

@@ -53,4 +53,19 @@ public interface QuestionSubmitService extends IService<QuestionSubmit> {
      */
     Page<QuestionSubmitVO> getQuestionSubmitVOPage(Page<QuestionSubmit> questionSubmitPage, User loginUser);
 
+    /**
+     * 根据题目id和用户id查询题目状态
+     * @param questionId
+     * @param id
+     * @return
+     */
+    Integer getQuestionStatueById(long questionId, Long id);
+
+    /**
+     * 查询用户通过对应难度数量
+     * @param difficulty
+     * @param id
+     * @return
+     */
+    Integer getQuestionDifficultyCountByUserId(Integer difficulty, Long id);
 }
