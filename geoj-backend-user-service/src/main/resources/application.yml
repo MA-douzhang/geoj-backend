@@ -48,3 +48,18 @@ codesandbox:
   type: remote
 knife4j:
   enable: true
+aliyun:
+  oss:
+    # oss对外服务的访问域名
+    endpoint: oss-cn-chengdu.aliyuncs.com
+    # 访问身份验证中用到用户标识
+    accessKeyId: *
+    # 用户用于加密签名字符串和oss用来验证签名字符串的密钥
+    accessKeySecret: *
+    # oss的存储空间
+    bucketName: *
+    # 上传文件大小(M)
+    maxSize: 3
+    # 上传文件夹路径前缀
+    dir:
+      prefix: geoj/images/
