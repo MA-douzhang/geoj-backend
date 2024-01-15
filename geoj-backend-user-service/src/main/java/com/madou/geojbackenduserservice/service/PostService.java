@@ -58,4 +58,11 @@ public interface PostService extends IService<Post> {
      * @return
      */
     Page<PostVO> getPostVOPage(Page<Post> postPage, HttpServletRequest request);
+
+    /**
+     * 根据id查询详细帖子
+     * @param id
+     * @return
+     */
+    PostVO getPostInfoById(long id);
 }

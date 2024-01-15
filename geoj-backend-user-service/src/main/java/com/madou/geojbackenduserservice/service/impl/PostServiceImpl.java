@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.madou.geojbackenduserservice.mapper.PostFavourMapper;
 import com.madou.geojbackenduserservice.mapper.PostMapper;
 import com.madou.geojbackenduserservice.mapper.PostThumbMapper;
+import com.madou.geojbackenduserservice.service.PostCommentService;
 import com.madou.geojbackenduserservice.service.PostService;
 import com.madou.geojbackenduserservice.service.UserService;
 import com.madou.geojcommon.common.ErrorCode;
@@ -19,11 +20,13 @@ import com.madou.geojmodel.entity.Post;
 import com.madou.geojmodel.entity.PostFavour;
 import com.madou.geojmodel.entity.PostThumb;
 import com.madou.geojmodel.entity.User;
+import com.madou.geojmodel.vo.PostCommentVO;
 import com.madou.geojmodel.vo.PostVO;
 import com.madou.geojmodel.vo.UserVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -53,6 +56,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     @Resource
     private PostFavourMapper postFavourMapper;
 
+    @Resource
+    private PostCommentService postCommentService;
     @Override
     public void validPost(Post post, boolean add) {
         if (post == null) {
@@ -193,6 +198,31 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }).collect(Collectors.toList());
         postVOPage.setRecords(postVOList);
         return postVOPage;
+    }
+
+    @Override
+    public PostVO getPostInfoById(long id) {
+        Post post = this.getById(id);
+        if (post == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "贴子不存在");
+        }
+        //帖子脱敏
+        PostVO postVO = new PostVO();
+        BeanUtils.copyProperties(post, postVO);
+        //查帖子的创建人信息
+        User createUser = userService.getById(postVO.getUserId());
+        UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(createUser, userVO);
+        postVO.setUser(userVO);
+        //查询帖子评论
+        Long postVOId = postVO.getId();
+        //查询缓存，没有缓存就查询数据库并更新缓存
+        List<PostCommentVO> postCommentVOList = postCommentService.getPostCommentVOListCache(postVOId);
+        if (postCommentVOList == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        postVO.setPostCommentList(postCommentVOList);
+        return postVO;
     }
 
 }

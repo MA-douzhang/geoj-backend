@@ -53,9 +53,9 @@ aliyun:
     # oss对外服务的访问域名
     endpoint: oss-cn-chengdu.aliyuncs.com
     # 访问身份验证中用到用户标识
-    accessKeyId: LTAI5tDV944dtJkyvXi4S7kT
+    accessKeyId: *
     # 用户用于加密签名字符串和oss用来验证签名字符串的密钥
-    accessKeySecret: 9iZKHG64c2VMNEk1apRvwqO5F4O8m0
+    accessKeySecret: *
     # oss的存储空间
     bucketName: geoj-bucket
     # 上传文件大小(M)

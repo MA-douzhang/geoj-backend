@@ -2,6 +2,7 @@ package com.madou.geojbackenduserservice.controller;
 
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.madou.geojbackenduserservice.service.PostCommentService;
 import com.madou.geojbackenduserservice.service.PostService;
 import com.madou.geojbackenduserservice.service.UserService;
 import com.madou.geojcommon.annotation.AuthCheck;
@@ -16,8 +17,12 @@ import com.madou.geojmodel.dto.post.PostAddRequest;
 import com.madou.geojmodel.dto.post.PostEditRequest;
 import com.madou.geojmodel.dto.post.PostQueryRequest;
 import com.madou.geojmodel.dto.post.PostUpdateRequest;
+import com.madou.geojmodel.dto.postComment.PostCommentAddRequest;
+import com.madou.geojmodel.dto.postComment.PostCommentQueryRequest;
 import com.madou.geojmodel.entity.Post;
+import com.madou.geojmodel.entity.PostComment;
 import com.madou.geojmodel.entity.User;
+import com.madou.geojmodel.vo.PostCommentVO;
 import com.madou.geojmodel.vo.PostVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -43,6 +48,9 @@ public class PostController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private PostCommentService postCommentService;
 
     // region 增删改查
 
@@ -147,6 +155,25 @@ public class PostController {
     }
 
     /**
+     * 根据帖子id查询评论
+     * @param postCommentQueryRequest
+     * @return
+     */
+    @PostMapping("/list/comment")
+    public BaseResponse<Page<PostCommentVO>> getPostCommentById(@RequestBody PostCommentQueryRequest postCommentQueryRequest) {
+        long current = postCommentQueryRequest.getCurrent();
+        long size = postCommentQueryRequest.getPageSize();
+        Long postId = postCommentQueryRequest.getPostId();
+        if (postId <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        List<PostCommentVO> postCommentVOListCache = postCommentService.getPostCommentVOListCache(postId);
+        Page<PostCommentVO> postCommentPage = new Page<>(current, size, postCommentVOListCache.size());
+        postCommentPage.setRecords(postCommentVOListCache);
+        return ResultUtils.success(postCommentPage);
+    }
+
+    /**
      * 分页获取列表（仅管理员）
      *
      * @param postQueryRequest
@@ -171,7 +198,7 @@ public class PostController {
      */
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<PostVO>> listPostVOByPage(@RequestBody PostQueryRequest postQueryRequest,
-            HttpServletRequest request) {
+                                                       HttpServletRequest request) {
         long current = postQueryRequest.getCurrent();
         long size = postQueryRequest.getPageSize();
         // 限制爬虫
@@ -190,7 +217,7 @@ public class PostController {
      */
     @PostMapping("/my/list/page/vo")
     public BaseResponse<Page<PostVO>> listMyPostVOByPage(@RequestBody PostQueryRequest postQueryRequest,
-            HttpServletRequest request) {
+                                                         HttpServletRequest request) {
         if (postQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -257,4 +284,20 @@ public class PostController {
         return ResultUtils.success(result);
     }
 
+    /**
+     * 添加帖子评论
+     *
+     * @param postCommentAddRequest
+     * @param httpServletRequest
+     * @return
+     */
+    @PostMapping("/addComment")
+    public BaseResponse<Boolean> addPostComment(@RequestBody PostCommentAddRequest postCommentAddRequest, HttpServletRequest httpServletRequest) {
+        if (postCommentAddRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(httpServletRequest);
+        boolean result = postCommentService.addComment(postCommentAddRequest, loginUser);
+        return ResultUtils.success(result);
+    }
 }
