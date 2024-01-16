@@ -3,6 +3,7 @@ package com.madou.geojmodel.vo;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * 帖子
@@ -49,6 +50,10 @@ public class PostCommentVO implements Serializable {
      */
     private Integer commentState;
 
+    /**
+     * 创建时间
+     */
+    private Date createTime;
 
 
 }

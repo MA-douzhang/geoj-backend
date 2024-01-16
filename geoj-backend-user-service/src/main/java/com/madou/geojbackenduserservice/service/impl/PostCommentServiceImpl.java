@@ -26,7 +26,9 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -175,6 +177,7 @@ public class PostCommentServiceImpl extends ServiceImpl<PostCommentMapper, PostC
                     //保存评论
                     boolean result = this.save(postComment);
                     //脱敏
+                    postComment = this.getById(postComment.getId());
                     PostCommentVO postCommentVO = new PostCommentVO();
                     BeanUtils.copyProperties(postComment, postCommentVO);
                     //添加默认值
