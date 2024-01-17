@@ -64,5 +64,5 @@ public interface PostService extends IService<Post> {
      * @param id
      * @return
      */
-    PostVO getPostInfoById(long id);
+    PostVO getPostInfoById(long id, Long userId);
 }

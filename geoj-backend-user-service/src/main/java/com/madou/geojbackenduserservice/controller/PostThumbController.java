@@ -6,6 +6,7 @@ import com.madou.geojcommon.common.BaseResponse;
 import com.madou.geojcommon.common.ErrorCode;
 import com.madou.geojcommon.common.ResultUtils;
 import com.madou.geojcommon.exception.BusinessException;
+import com.madou.geojmodel.dto.postComment.PostCommentThumbAddRequest;
 import com.madou.geojmodel.dto.postthumb.PostThumbAddRequest;
 import com.madou.geojmodel.entity.User;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +52,26 @@ public class PostThumbController {
         final User loginUser = userService.getLoginUser(request);
         long postId = postThumbAddRequest.getPostId();
         int result = postThumbService.doPostThumb(postId, loginUser);
+        return ResultUtils.success(result);
+    }
+
+    /**
+     * 点赞 / 取消点赞
+     *
+     * @param postCommentThumbAddRequest
+     * @param request
+     * @return resultNum 本次点赞变化数
+     */
+    @PostMapping("/common")
+    public BaseResponse<Integer> doCommonThumb(@RequestBody PostCommentThumbAddRequest postCommentThumbAddRequest,
+                                         HttpServletRequest request) {
+        if (postCommentThumbAddRequest == null || postCommentThumbAddRequest.getPostCommentId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 登录才能点赞
+        final User loginUser = userService.getLoginUser(request);
+        long postCommentId = postCommentThumbAddRequest.getPostCommentId();
+        int result = postThumbService.doPostCommentThumb(postCommentId, loginUser);
         return ResultUtils.success(result);
     }
 

@@ -36,6 +36,12 @@ public class PostThumb implements Serializable {
      */
     private Long userId;
 
+
+    /**
+     * 创建用户 id
+     */
+    private Integer type;
+
     /**
      * 创建时间
      */

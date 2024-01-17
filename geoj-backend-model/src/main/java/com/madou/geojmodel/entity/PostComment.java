@@ -43,7 +43,10 @@ public class PostComment implements Serializable {
      * 状态 0 正常
      */
     private Integer commentState;
-
+    /**
+     * 点赞数
+     */
+    private Integer thumbNum;
     /**
      * 创建时间
      */

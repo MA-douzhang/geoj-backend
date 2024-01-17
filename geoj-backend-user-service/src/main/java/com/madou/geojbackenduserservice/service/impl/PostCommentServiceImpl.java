@@ -3,18 +3,19 @@ package com.madou.geojbackenduserservice.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.madou.geojbackenduserservice.mapper.PostCommentMapper;
+import com.madou.geojbackenduserservice.mapper.PostThumbMapper;
 import com.madou.geojbackenduserservice.service.NoticeService;
 import com.madou.geojbackenduserservice.service.PostCommentService;
 import com.madou.geojbackenduserservice.service.PostService;
 import com.madou.geojbackenduserservice.service.UserService;
 import com.madou.geojcommon.common.ErrorCode;
+import com.madou.geojcommon.constant.CommonConstant;
 import com.madou.geojcommon.constant.RedisConstant;
 import com.madou.geojcommon.exception.BusinessException;
+import com.madou.geojcommon.utils.SqlUtils;
 import com.madou.geojmodel.dto.postComment.PostCommentAddRequest;
-import com.madou.geojmodel.entity.Notice;
-import com.madou.geojmodel.entity.Post;
-import com.madou.geojmodel.entity.PostComment;
-import com.madou.geojmodel.entity.User;
+import com.madou.geojmodel.dto.postComment.PostCommentQueryRequest;
+import com.madou.geojmodel.entity.*;
 import com.madou.geojmodel.vo.PostCommentVO;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
@@ -26,11 +27,7 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.sql.Time;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -58,9 +55,12 @@ public class PostCommentServiceImpl extends ServiceImpl<PostCommentMapper, PostC
     @Resource
     private NoticeService noticeService;
 
+    @Resource
+    private PostThumbMapper postThumbMapper;
+
     @Override
-    public List<PostCommentVO> getPostCommentVOList(Long postId) {
-        if (postId <= 0) {
+    public List<PostCommentVO> getPostCommentVOList(Long postCommentId, Long userId) {
+        if (postCommentId <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         //反复抢锁 保证数据一致性
@@ -75,7 +75,9 @@ public class PostCommentServiceImpl extends ServiceImpl<PostCommentMapper, PostC
                     System.out.println("getLock" + Thread.currentThread().getId());
                     //查询信息
                     QueryWrapper<PostComment> queryWrapper = new QueryWrapper<>();
-                    queryWrapper.eq("postId", postId);
+                    queryWrapper.eq("postId", postCommentId);
+                    queryWrapper.orderBy(true, false,
+                            "thumbNum");
                     List<PostComment> postCommentList = this.list(queryWrapper);
                     //帖子有评论就加载评论
                     if (postCommentList != null && postCommentList.size() > 0) {
@@ -88,6 +90,16 @@ public class PostCommentServiceImpl extends ServiceImpl<PostCommentMapper, PostC
                                 .stream().collect(Collectors.groupingBy(User::getId));
                         //将查出来的用户信息与评论信息对接
                         //将信息复制到返回类中
+                        // 获取点赞 评论点赞
+                        Map<Long, Boolean> postIdHasThumbMap = new HashMap<>();
+                        Set<Long> postCommentIdSet = postCommentList.stream().map(PostComment::getId).collect(Collectors.toSet());
+                        QueryWrapper<PostThumb> postThumbQueryWrapper = new QueryWrapper<>();
+                        postThumbQueryWrapper.in("postId", postCommentIdSet);
+                        postThumbQueryWrapper.eq("userId", userId);
+                        postThumbQueryWrapper.eq("type", 1);
+
+                        List<PostThumb> postPostThumbList = postThumbMapper.selectList(postThumbQueryWrapper);
+                        postPostThumbList.forEach(postPostThumb -> postIdHasThumbMap.put(postPostThumb.getPostId(), true));
                         postCommentList.forEach(postComment -> {
                             PostCommentVO postCommentVO = new PostCommentVO();
                             BeanUtils.copyProperties(postComment, postCommentVO);
@@ -98,12 +110,13 @@ public class PostCommentServiceImpl extends ServiceImpl<PostCommentMapper, PostC
                             User user = userListMap.get(postCommentVO.getUserId()).get(0);
                             postCommentVO.setUsername(user.getUserName());
                             postCommentVO.setAvatarUrl(user.getUserAvatar());
+                            postCommentVO.setHasThumb(postIdHasThumbMap.getOrDefault(postCommentVO.getId(), false));
                         });
                     }
                     ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
                     //写缓存
                     try {
-                        valueOperations.set(RedisConstant.REDIS_POST_COMMENT_KEY + postId, postCommentVOList);
+                        valueOperations.set(RedisConstant.REDIS_POST_COMMENT_KEY + postCommentId + userId, postCommentVOList);
                     } catch (Exception e) {
                         log.error("redis set key error", e);
                     }
@@ -123,12 +136,12 @@ public class PostCommentServiceImpl extends ServiceImpl<PostCommentMapper, PostC
     }
 
     @Override
-    public List<PostCommentVO> getPostCommentVOListCache(Long postId) {
+    public List<PostCommentVO> getPostCommentVOListCache(Long postCommentId, Long userId) {
         //查询缓存
         ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
-        List<PostCommentVO> postCommentVOList = (List<PostCommentVO>) valueOperations.get(RedisConstant.REDIS_POST_COMMENT_KEY + postId);
+        List<PostCommentVO> postCommentVOList = (List<PostCommentVO>) valueOperations.get(RedisConstant.REDIS_POST_COMMENT_KEY + postCommentId + userId);
         //缓存为空，查询数据库并写入缓存,不为空返回缓存数据
-        return postCommentVOList == null ? getPostCommentVOList(postId) : postCommentVOList;
+        return postCommentVOList == null ? getPostCommentVOList(postCommentId, userId) : postCommentVOList;
     }
 
     @Override
@@ -165,7 +178,7 @@ public class PostCommentServiceImpl extends ServiceImpl<PostCommentMapper, PostC
         final long userId = loginUser.getId();
         postComment.setUserId(userId);
         //查询当前帖子的评论缓存
-        List<PostCommentVO> commentVOListCache = this.getPostCommentVOListCache(postId);
+        List<PostCommentVO> commentVOListCache = this.getPostCommentVOListCache(postId, userId);
         //抢锁更新数据库评论和更新缓存
         RLock lock = redissonClient.getLock(RedisConstant.REDIS_POST_COMMENT_UPDATE_KEY);
         try {

@@ -140,6 +140,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             QueryWrapper<PostThumb> postThumbQueryWrapper = new QueryWrapper<>();
             postThumbQueryWrapper.in("postId", postId);
             postThumbQueryWrapper.eq("userId", loginUser.getId());
+            postThumbQueryWrapper.eq("type", 0);
             PostThumb postThumb = postThumbMapper.selectOne(postThumbQueryWrapper);
             postVO.setHasThumb(postThumb != null);
             // 获取收藏
@@ -201,7 +202,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     }
 
     @Override
-    public PostVO getPostInfoById(long id) {
+    public PostVO getPostInfoById(long id,Long userId) {
         Post post = this.getById(id);
         if (post == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "贴子不存在");
@@ -217,7 +218,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         //查询帖子评论
         Long postVOId = postVO.getId();
         //查询缓存，没有缓存就查询数据库并更新缓存
-        List<PostCommentVO> postCommentVOList = postCommentService.getPostCommentVOListCache(postVOId);
+        List<PostCommentVO> postCommentVOList = postCommentService.getPostCommentVOListCache(postVOId,userId);
         if (postCommentVOList == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }

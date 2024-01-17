@@ -156,18 +156,21 @@ public class PostController {
 
     /**
      * 根据帖子id查询评论
+     *
      * @param postCommentQueryRequest
      * @return
      */
+    //todo 加入缓存，点赞需要更新
     @PostMapping("/list/comment")
-    public BaseResponse<Page<PostCommentVO>> getPostCommentById(@RequestBody PostCommentQueryRequest postCommentQueryRequest) {
+    public BaseResponse<Page<PostCommentVO>> getPostCommentById(@RequestBody PostCommentQueryRequest postCommentQueryRequest, HttpServletRequest request) {
         long current = postCommentQueryRequest.getCurrent();
         long size = postCommentQueryRequest.getPageSize();
         Long postId = postCommentQueryRequest.getPostId();
+        User loginUser = userService.getLoginUser(request);
         if (postId <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        List<PostCommentVO> postCommentVOListCache = postCommentService.getPostCommentVOListCache(postId);
+        List<PostCommentVO> postCommentVOListCache = postCommentService.getPostCommentVOList(postId, loginUser.getId());
         Page<PostCommentVO> postCommentPage = new Page<>(current, size, postCommentVOListCache.size());
         postCommentPage.setRecords(postCommentVOListCache);
         return ResultUtils.success(postCommentPage);

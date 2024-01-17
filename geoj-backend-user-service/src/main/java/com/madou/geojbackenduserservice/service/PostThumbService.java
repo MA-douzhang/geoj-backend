@@ -29,4 +29,23 @@ public interface PostThumbService extends IService<PostThumb> {
      * @return
      */
     int doPostThumbInner(long userId, long postId);
+
+
+    /**
+     * 帖子评论点赞
+     *
+     * @param postId
+     * @param loginUser
+     * @return
+     */
+    int doPostCommentThumb(long postId, User loginUser);
+
+    /**
+     * 帖子点赞（内部服务）
+     *
+     * @param userId
+     * @param postId
+     * @return
+     */
+    int doPostCommentThumbInner(long userId, long postId);
 }
