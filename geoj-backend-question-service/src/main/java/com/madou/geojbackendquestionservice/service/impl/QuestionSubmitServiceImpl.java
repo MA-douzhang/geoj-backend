@@ -46,8 +46,6 @@ import java.util.stream.Collectors;
 public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper, QuestionSubmit>
         implements QuestionSubmitService {
 
-    @Value("${codesandbox.type:remote}")
-    private String type;
     @Resource
     private QuestionService questionService;
 

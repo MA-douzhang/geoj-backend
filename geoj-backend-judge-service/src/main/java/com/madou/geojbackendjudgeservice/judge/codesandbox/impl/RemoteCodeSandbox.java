@@ -9,6 +9,7 @@ import com.madou.geojcommon.exception.BusinessException;
 import com.madou.geojmodel.codesandbox.ExecuteCodeRequest;
 import com.madou.geojmodel.codesandbox.ExecuteCodeResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -22,11 +23,14 @@ public class RemoteCodeSandbox implements CodeSandbox {
 
     private static final String AUTH_REQUEST_SECRET = "secretKey";
 
+    @Value("${codesandbox.hostUrl:hostUrl}")
+    private String hostUrl;
+
 
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeCodeRequest) {
         System.out.println("远程代码沙箱");
-        String url = "http://localhost:8091/executeCode";
+        String url = this.hostUrl;
         String json = JSONUtil.toJsonStr(executeCodeRequest);
         //请求沙箱超过10s不返回信息为报错
         String responseStr = HttpUtil.createPost(url)

@@ -22,10 +22,10 @@ public class oss {
 // 授权STSAssumeRole访问的Region。以华东1（杭州）为例，其它Region请根据实际情况填写。
         String region = "cn-chendu";
 // 从环境变量中获取RAM用户的访问密钥（AccessKey ID和AccessKey Secret）。
-        String accessKeyId = "LTAI5tDV944dtJkyvXi4S7kT";
-        String accessKeySecret = "9iZKHG64c2VMNEk1apRvwqO5F4O8m0";
+        String accessKeyId = "*";
+        String accessKeySecret = "*";
 // 填写RAM角色的ARN信息，即需要扮演的角色ID。
-        String roleArn = "acs:ram::1425953725845147:role/madou";
+        String roleArn = "*";
 
 // 使用代码嵌入的RAM用户的访问密钥配置访问凭证。
         CredentialsProvider credentialsProvider = new DefaultCredentialProvider(accessKeyId, accessKeySecret);

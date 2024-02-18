@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: geoj-backend-user-service
+  profiles:
+    active: dev
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  session:
+    store-type: redis
+    timeout: 2592000
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/ge_oj
+    username: root
+    password: 123456
+  redis:
+    database: 2
+    host: localhost
+    port: 6379
+    timeout: 5000
+  servlet:
+    multipart:
+      max-file-size: 10MB
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+server:
+  address: 0.0.0.0
+  port: 8102
+  servlet:
+    context-path: /api/user
+    session:
+      cookie:
+        max-age: 2592000
+        path: /api
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+codesandbox:
+  type: remote
+knife4j:
+  enable: true
+aliyun:
+  oss:
+    # oss对外服务的访问域名
+    endpoint: oss-cn-chengdu.aliyuncs.com
+    # 访问身份验证中用到用户标识
+    accessKeyId: *
+    # 用户用于加密签名字符串和oss用来验证签名字符串的密钥
+    accessKeySecret: *
+    # oss的存储空间
+    bucketName: geoj-bucket
+    # 上传文件大小(M)
+    maxSize: 3
+    # 上传文件夹路径前缀
+    dir:
+      prefix: geoj/images/

@@ -19,11 +19,19 @@ public class InitRabbitMqBean {
     @Value("${spring.rabbitmq.host:localhost}")
     private String host;
 
+    @Value("${spring.rabbitmq.username:username}")
+    private String username;
+
+    @Value("${spring.rabbitmq.password:password}")
+    private String password;
+
     @PostConstruct
     public void init() {
         try {
             ConnectionFactory factory = new ConnectionFactory();
             factory.setHost(host);
+            factory.setUsername(username);
+            factory.setPassword(password);
             Connection connection = factory.newConnection();
             Channel channel = connection.createChannel();
             String EXCHANGE_NAME = "code_exchange";
