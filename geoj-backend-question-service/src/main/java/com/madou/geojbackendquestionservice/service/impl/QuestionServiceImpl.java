@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.madou.geojbackendquestionservice.mapper.QuestionMapper;
+import com.madou.geojbackendquestionservice.service.GameQuestionService;
 import com.madou.geojbackendquestionservice.service.QuestionService;
 import com.madou.geojbackendserviceclient.service.UserFeignClient;
 import com.madou.geojcommon.common.ErrorCode;
@@ -11,6 +12,7 @@ import com.madou.geojcommon.constant.CommonConstant;
 import com.madou.geojcommon.exception.BusinessException;
 import com.madou.geojcommon.exception.ThrowUtils;
 import com.madou.geojcommon.utils.SqlUtils;
+import com.madou.geojmodel.dto.game.GameQuestionVO;
 import com.madou.geojmodel.dto.question.QuestionQueryRequest;
 import com.madou.geojmodel.entity.Question;
 import com.madou.geojmodel.entity.User;
@@ -41,6 +43,8 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     @Resource
     private UserFeignClient userFeignClient;
 
+    @Resource
+    private GameQuestionService gameQuestionService;
     /**
      * 校验题目是否合法
      *
@@ -144,14 +148,14 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         Set<Long> userIdSet = questionList.stream().map(Question::getUserId).collect(Collectors.toSet());
         Map<Long, List<User>> userIdUserListMap = userFeignClient.listByIds(userIdSet).stream()
                 .collect(Collectors.groupingBy(User::getId));
-        // 填充信息
+        // 填充信息,采用流处理
         List<QuestionVO> questionVOList = questionList.stream().map(question -> {
             QuestionVO questionVO = QuestionVO.objToVo(question);
             Long userId = question.getUserId();
             User user = null;
             if (userIdUserListMap.containsKey(userId)) {
                 user = userIdUserListMap.get(userId).get(0);
-            }
+            }//添加题目创建人信息
             questionVO.setUserVO(userFeignClient.getUserVO(user));
             return questionVO;
         }).collect(Collectors.toList());
@@ -166,6 +170,35 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         queryWrapper.eq("difficulty", difficulty);
         Long count = count(queryWrapper);
         return count;
+    }
+
+    @Override
+    public Page<GameQuestionVO> getGameQuestionVOPage(Page<Question> questionPage, HttpServletRequest request) {
+        List<Question> questionList = questionPage.getRecords();
+        Page<GameQuestionVO> questionVOPage = new Page<>(questionPage.getCurrent(), questionPage.getSize(), questionPage.getTotal());
+        if (CollectionUtils.isEmpty(questionList)) {
+            return questionVOPage;
+        }
+        // 1. 关联查询用户信息
+        Set<Long> userIdSet = questionList.stream().map(Question::getUserId).collect(Collectors.toSet());
+        Map<Long, List<User>> userIdUserListMap = userFeignClient.listByIds(userIdSet).stream()
+                .collect(Collectors.groupingBy(User::getId));
+        // 填充信息,采用流处理
+        List<GameQuestionVO> questionVOList = questionList.stream().map(question -> {
+            QuestionVO questionVO = QuestionVO.objToVo(question);
+            Long userId = question.getUserId();
+            User user = null;
+            if (userIdUserListMap.containsKey(userId)) {
+                user = userIdUserListMap.get(userId).get(0);
+            }//添加题目创建人信息
+            questionVO.setUserVO(userFeignClient.getUserVO(user));
+            GameQuestionVO gameQuestionVO = new GameQuestionVO();
+            gameQuestionVO.setQuestionVO(questionVO);
+            return gameQuestionVO;
+        }).collect(Collectors.toList());
+        questionVOPage.setRecords(questionVOList);
+        return questionVOPage;
+
     }
 
 

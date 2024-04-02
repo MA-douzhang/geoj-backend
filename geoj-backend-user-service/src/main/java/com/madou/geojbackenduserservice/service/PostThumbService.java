@@ -32,7 +32,7 @@ public interface PostThumbService extends IService<PostThumb> {
 
 
     /**
-     * 帖子评论点赞
+     * 帖子评论
      *
      * @param postId
      * @param loginUser

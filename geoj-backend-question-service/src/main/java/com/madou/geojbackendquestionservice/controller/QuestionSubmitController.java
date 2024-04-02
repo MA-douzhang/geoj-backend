@@ -1,44 +1,29 @@
 package com.madou.geojbackendquestionservice.controller;
 
-import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.google.gson.Gson;
 import com.madou.geojai.AiManager;
 import com.madou.geojai.model.AnswerAi;
 import com.madou.geojbackendquestionservice.service.QuestionService;
 import com.madou.geojbackendquestionservice.service.QuestionSubmitService;
 import com.madou.geojbackendserviceclient.service.JudgeFeignClient;
 import com.madou.geojbackendserviceclient.service.UserFeignClient;
-import com.madou.geojcommon.annotation.AuthCheck;
 import com.madou.geojcommon.common.BaseResponse;
-import com.madou.geojcommon.common.DeleteRequest;
 import com.madou.geojcommon.common.ErrorCode;
 import com.madou.geojcommon.common.ResultUtils;
 import com.madou.geojcommon.constant.AiConstant;
-import com.madou.geojcommon.constant.UserConstant;
 import com.madou.geojcommon.exception.BusinessException;
-import com.madou.geojcommon.exception.ThrowUtils;
-import com.madou.geojmodel.dto.question.*;
 import com.madou.geojmodel.dto.questionRun.QuestionRunRequest;
 import com.madou.geojmodel.dto.questionRun.QuestionRunResult;
 import com.madou.geojmodel.dto.questionSubmit.QuestionSubmitAddRequest;
 import com.madou.geojmodel.dto.questionSubmit.QuestionSubmitQueryRequest;
-import com.madou.geojmodel.entity.Question;
 import com.madou.geojmodel.entity.QuestionSubmit;
 import com.madou.geojmodel.entity.User;
-import com.madou.geojmodel.vo.QuestionDifficultyVO;
 import com.madou.geojmodel.vo.QuestionSubmitVO;
-import com.madou.geojmodel.vo.QuestionVO;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
-import java.util.List;
 
 /**
  * 题目接口
@@ -75,7 +60,6 @@ public class QuestionSubmitController {
         if (questionSubmitAddRequest == null || questionSubmitAddRequest.getQuestionId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        // 登录才能点赞
         final User loginUser = userFeignClient.getLoginUser(request);
         long questionSubmitId = questionSubmitService.doQuestionSubmit(questionSubmitAddRequest, loginUser);
         return ResultUtils.success(questionSubmitId);

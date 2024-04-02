@@ -60,12 +60,11 @@ public class QuestionAiServiceImpl implements QuestionAiService {
         String solutionIdea= splits[0].trim();
         String reason = splits[1].trim();
         String codeAi = splits[2].trim();
-
+        //封装返回现象
         AnswerAi answerAi = new AnswerAi();
         answerAi.setSolutionIdea(solutionIdea);
         answerAi.setReason(reason);
         answerAi.setCodeAi(codeAi);
-
         return answerAi;
 
     }

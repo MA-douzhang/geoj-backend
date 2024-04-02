@@ -18,12 +18,10 @@ public class AiManager {
 
     public String doChat(String message,Long modelId){
         DevChatRequest devChatRequest = new DevChatRequest();
-        devChatRequest.setModelId(modelId);
-        devChatRequest.setMessage(message);
-
+        devChatRequest.setModelId(modelId);//模型id
+        devChatRequest.setMessage(message);//发送消息
         // 获取响应
         BaseResponse<DevChatResponse> response = client.doChat(devChatRequest);
-
         if (response == null){
             throw new RuntimeException("AI 响应错误");
         }

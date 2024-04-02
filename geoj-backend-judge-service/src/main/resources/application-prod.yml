@@ -1,10 +1,6 @@
 spring:
   application:
     name: geoj-backend-judge-service
-  # 默认 dev 环境
-  config:
-    activate:
-      on-profile: dev
   # 支持 swagger3
   mvc:
     pathmatch:
@@ -17,15 +13,16 @@ spring:
   # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/ge_oj
-    username: root
-    password: 123456
+    url: jdbc:mysql://8.130.16.185:3306/ge_oj
+    username: madou1
+    password: 789159357Zj
   # Redis 配置
   redis:
-    database: 2
-    host: localhost
+    database: 1
+    host: 8.130.16.185
     port: 6379
     timeout: 5000
+    password: 789159357Zj
   servlet:
     multipart:
       # 大小限制
@@ -33,12 +30,25 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:8848
+        server-addr: 172.17.0.2:8848
   rabbitmq:
-    host: localhost
+    host: 172.17.0.3
     port: 5672
-    password: guest
     username: guest
+    password: 789159357Zj
+    listener:
+      direct:
+        acknowledge-mode: manual
+        retry:
+          enabled: true
+          max-attempts: 5
+          initial-interval: 5000
+          multiplier: 1.5
+          max-interval: 60000
+  config:
+    activate:
+      on-profile:
+        - prod
 server:
   address: 0.0.0.0
   port: 8104
@@ -62,6 +72,6 @@ mybatis-plus:
 # 代码沙箱配置
 codesandbox:
   type: remote
-  hostUrl: "http://localhost:8091/executeCode"
+  hostUrl: "http://172.17.0.5:8091/executeCode"
 knife4j:
   enable: true

@@ -111,11 +111,11 @@ public class JudgeServiceImpl implements JudgeService {
             judgeContext.setJudgeInfo(judgeInfo);
             judgeInfo = judgeManager.doJudge(judgeContext);
         }else if(executeCodeResponse.getStatus().equals(QuestionSubmitStatusEnum.FAILED.getValue())){
-            judgeInfo.setPass(0);
+            judgeInfo.setPass(0);//答案错误
             judgeInfo.setStatus(JudgeInfoMessageEnum.RUNTIME_ERROR.getValue());
             judgeInfo.setMessage(JudgeInfoMessageEnum.RUNTIME_ERROR.getText() + executeCodeResponse.getMessage());
         } else if(executeCodeResponse.getStatus().equals(QuestionSubmitStatusEnum.COMPILE_FAILED.getValue())){
-            judgeInfo.setPass(0);
+            judgeInfo.setPass(0);//编译执行错误
             judgeInfo.setStatus(JudgeInfoMessageEnum.COMPILE_ERROR.getValue());
             judgeInfo.setMessage(JudgeInfoMessageEnum.COMPILE_ERROR.getText() + executeCodeResponse.getMessage());
         }

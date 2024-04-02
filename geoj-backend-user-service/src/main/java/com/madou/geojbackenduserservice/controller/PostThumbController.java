@@ -56,7 +56,7 @@ public class PostThumbController {
     }
 
     /**
-     * 点赞 / 取消点赞
+     * 评论
      *
      * @param postCommentThumbAddRequest
      * @param request

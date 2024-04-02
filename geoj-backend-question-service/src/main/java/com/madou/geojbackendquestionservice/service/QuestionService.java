@@ -3,6 +3,7 @@ package com.madou.geojbackendquestionservice.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.madou.geojmodel.dto.game.GameQuestionVO;
 import com.madou.geojmodel.dto.question.QuestionQueryRequest;
 import com.madou.geojmodel.entity.Question;
 import com.madou.geojmodel.vo.QuestionVO;
@@ -58,4 +59,11 @@ public interface QuestionService extends IService<Question> {
      */
     Long getQuestionDifficultyNum(Integer difficulty);
 
+    /**
+     * 分页获取竞赛题目封装
+     * @param questionPage
+     * @param request
+     * @return
+     */
+    Page<GameQuestionVO> getGameQuestionVOPage(Page<Question> questionPage, HttpServletRequest request);
 }

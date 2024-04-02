@@ -90,7 +90,6 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         // 将QuestionSubmit的提交数+1
         questionMapper.update(null, new UpdateWrapper<Question>()
                 .setSql("submitNum = submitNum + 1").eq("id", question.getId()));
-
         // 每个用户串行提交题目
         QuestionSubmit questionSubmit = new QuestionSubmit();
         questionSubmit.setUserId(userId);
@@ -183,12 +182,16 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         QueryWrapper<QuestionSubmit> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("questionId", questionId);
         queryWrapper.eq("userId", userId);
+        //根据题目id和用户id查询提交状态
         List<QuestionSubmit> list = list(queryWrapper);
+        //未尝试过
         if (list.size() == 0) return 1;
         for (QuestionSubmit questionSubmit : list) {
             JudgeInfo judgeInfo = JSONUtil.toBean(questionSubmit.getJudgeInfo(), JudgeInfo.class);
+            //题目提交状态为通过返回3表示通过
             if (judgeInfo.getStatus().equals(JudgeInfoMessageEnum.ACCEPTED.getValue())) return 3;
         }
+        //2代表尝试过该题目
         return 2;
     }
 
