@@ -6,6 +6,7 @@
 
 [后端代码](https://github.com/MA-douzhang/geoj-backend)
 
+该项目有完整论文，如有需要请添加WX号：wozuisuainizuichou
 ***
 当前是吉OJ-Cloud项目的后端源码，该项目是ACM答题方式，前端模仿Leetcode样式的在线判题平台。
 
@@ -13,6 +14,19 @@
 
 框架中整合了RabbitMQ + AI + Redis 作为公共模块
 
+### 描述
+设计的平台是为了使用户练习算法题，用户可以快速的提高算法能力与了解自己的算法学习方向，达到可以快速提高算法能力并了解自己算法学习方向的目的平台应用采用ACM的刷题模式，利用AI分析用户提交的代码，并分析出用户代码中的不足点，给出优化代码。代码在线测评使用Docker虚拟化技术实现，防止注入木马程序，恶意代码破坏运行环境，保证代码运行的安全性，在线测评平台针对不同的用户提供高质量个性化学习服务。
+## 项目展示
+
+![](./doc/img/login.jpg)
+![](./doc/img/register.jpg)
+![](./doc/img/图片1.png)
+![](./doc/img/图片2.png)
+![](./doc/img/图片3.png)
+![](./doc/img/图片4.png)
+![](./doc/img/history.jpg)
+![](./doc/img/question.jpg)
+![](./doc/img/questionmodify.jpg)
 ## 技术栈
 ***
 框架：Spring Cloud
